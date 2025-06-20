@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  profiles      Profile[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+}
+
+model Profile {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  tenantName      String
+  contactNumber   String
+  roomNumber      String    @default("Unknown")
+  securityDeposit Int?
+  moveInDate      DateTime?
+  description     String?
+  rent            Int?
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bills           Bill[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
+}
+
+model Bill {
+  id             Int       @id @default(autoincrement())
+  profileId      Int
+  date           DateTime
+  rent           Int
+  electric       Int?
+  gas            Int?
+  water          Int?
+  customFields   Json?
+  total          Int
+  contactNumber  String
+  description   String?
+  status         String    @default("pending")
+  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
